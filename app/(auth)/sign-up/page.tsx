@@ -57,8 +57,10 @@ const SignUp = () => {
           error={errors.email}
           validation={{
             required: "Email is required",
-            pattern: /^\w+@\w+\\.\w+$/,
-            message: "Invalid email address",
+            pattern: {
+              value: /^\S+@\S+\.\S+$/,
+              message: "Invalid email address",
+            },
           }}
         />
         <InputField
@@ -96,9 +98,9 @@ const SignUp = () => {
           required
         />
         <SelectField
-          name="preffredIndustry"
-          label={"Preffred Industry"}
-          placeholder="Select your preffred Industry"
+          name="preferredIndustry"
+          label={"Preferred Industry"}
+          placeholder="Select your preferred Industry"
           options={PREFERRED_INDUSTRIES}
           control={control}
           error={errors.preferredIndustry}
