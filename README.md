@@ -34,3 +34,60 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Database connectivity — how to test
+
+Follow these steps to verify your MongoDB connection works both from the server runtime and via an HTTP health check.
+
+1) Configure your environment
+
+- Create a `.env` file in the project root (if not present) and set:
+
+```
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster-host>/<db>?retryWrites=true&w=majority
+```
+
+2) Test via CLI (recommended)
+
+- Run the built-in script that pings MongoDB using the official driver:
+
+```
+npm run db:test
+```
+
+- Success example:
+
+```
+[db-test] MongoDB ping ok in 45ms: { ok: 1 }
+```
+
+- Failure example (invalid URI, auth, or network):
+
+```
+[db-test] MongoDB connection failed: Authentication failed.
+```
+
+3) Test via HTTP health endpoint (while dev server is running)
+
+- Start the dev server:
+
+```
+npm run dev
+```
+
+- Open this URL in the browser or curl it:
+
+```
+http://localhost:3000/api/health/db
+```
+
+- Expected JSON on success:
+
+```
+{"ok":true,"state":1,"elapsedMs":<number>}
+```
+
+Notes
+
+- The Mongoose connection helper is at `database/mongoose.ts` and caches the connection per runtime for performance.
+- The health route is at `app/api/health/db/route.ts` and simply ensures a connection can be established.
