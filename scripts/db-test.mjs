@@ -5,6 +5,11 @@ import { MongoClient } from "mongodb";
 
 const uri = process.env.MONGODB_URI;
 
+/**
+ * Tests MongoDB connectivity using the MONGODB_URI environment variable, logs the result, and exits the process.
+ *
+ * Exits with code 0 on successful ping, 1 on connection failure, and 2 if MONGODB_URI is not set. Logs a success message including round-trip latency on success and an error message on failure.
+ */
 async function main() {
   if (!uri) {
     console.error("[db-test] Missing MONGODB_URI in .env");
