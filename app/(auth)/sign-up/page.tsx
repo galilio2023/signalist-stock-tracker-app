@@ -11,8 +11,12 @@ import {
 } from "@/lib/constants";
 import { CountrySelectField } from "@/components/forms/CountrySelectField";
 import FooterLink from "@/components/forms/FooterLink";
+import { signUpWithEmail } from "@/lib/actions/auth.actions";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const SignUp = () => {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -32,9 +36,17 @@ const SignUp = () => {
   });
   const onSubmit = async (data: SignUpFormData) => {
     try {
-      console.log(data);
+      const result = await signUpWithEmail(data);
+      if (result.success) {
+        toast.success("Account created successfully");
+        router.push("/");
+      }
     } catch (e) {
       console.error(e);
+      toast.error("Sign up failed.", {
+        description:
+          e instanceof Error ? e.message : "failed to create an account.",
+      });
     }
   };
   return (
@@ -57,8 +69,10 @@ const SignUp = () => {
           error={errors.email}
           validation={{
             required: "Email is required",
-            pattern: /^\w+@\w+\\.\w+$/,
-            message: "Invalid email address",
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: "Invalid email address",
+            },
           }}
         />
         <InputField
@@ -96,9 +110,9 @@ const SignUp = () => {
           required
         />
         <SelectField
-          name="preffredIndustry"
-          label={"Preffred Industry"}
-          placeholder="Select your preffred Industry"
+          name="preferredIndustry"
+          label={"Preferred Industry"}
+          placeholder="Select your preferred industry"
           options={PREFERRED_INDUSTRIES}
           control={control}
           error={errors.preferredIndustry}

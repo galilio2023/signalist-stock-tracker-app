@@ -1,93 +1,163 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Signalist — Stocks App
 
-## Getting Started
+A Next.js 15 app that integrates MongoDB (Mongoose), BetterAuth, Inngest (serverless jobs) with Google Gemini for AI-generated content, and Nodemailer for transactional emails. The project provides a production‑ready foundation for user sign‑up, background processing, and email delivery.
 
-First, run the development server:
+## Features
 
-```bash
+- Next.js App Router (15) with TypeScript
+- MongoDB via Mongoose with connection caching
+- Authentication using better-auth + MongoDB adapter
+- Inngest background function to send personalized welcome emails
+- Gemini (Google AI) integration to generate personalized email intro text
+- Nodemailer with a production-grade responsive HTML template
+- Health endpoint for DB connectivity and a CLI DB test script
+
+## Quick Start
+
+1) Prerequisites
+- Node.js 20+
+- A MongoDB database (Atlas or self-hosted)
+- Gmail account (use an App Password) or another SMTP service
+- Google AI Studio key (Gemini) if you want AI personalization
+
+2) Install
+```
+npm install
+```
+
+3) Configure environment
+- Copy `.env.example` to `.env` and replace placeholder values with your own secrets. Do NOT commit real secrets.
+- See docs/environment.md for all variables.
+
+4) Run in development
+```
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
+Open http://localhost:3000
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## Database connectivity — how to test
-
-Follow these steps to verify your MongoDB connection works both from the server runtime and via an HTTP health check.
-
-1) Configure your environment
-
-- Create a `.env` file in the project root (if not present) and set:
-
-```
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster-host>/<db>?retryWrites=true&w=majority
-```
-
-2) Test via CLI (recommended)
-
-- Run the built-in script that pings MongoDB using the official driver:
-
+5) Verify database connectivity (optional but recommended)
 ```
 npm run db:test
 ```
-
-- Success example:
-
+or HTTP health check while dev server is running:
 ```
-[db-test] MongoDB ping ok in 45ms: { ok: 1 }
+GET http://localhost:3000/api/health/db
 ```
 
-- Failure example (invalid URI, auth, or network):
+## Documentation
+
+### Architecture Overview
+
+- Next.js (App Router) for UI and API routes under `app/api/*`.
+- MongoDB via Mongoose; a cached connection helper lives in `database/mongoose.ts`.
+- Authentication configured with BetterAuth using a MongoDB adapter and Next.js cookies; see `lib/better-auth/auth.ts`.
+- Background processing with Inngest; HTTP handler in `app/api/inngest/route.ts`, jobs in `lib/inngest/functions.ts` and prompts in `lib/inngest/prompts.ts`.
+- Transactional email via Nodemailer using a responsive HTML template; see `lib/nodemailer/*`.
+
+### Environment Variables
+
+Set these in `.env` (never commit real secrets):
+
+- MONGODB_URI: MongoDB connection string for Mongoose and db-test script.
+- BETTER_AUTH_SECRET: Secret for BetterAuth; use a strong random value.
+- BETTER_AUTH_URL: Public base URL for auth callbacks (e.g., http://localhost:3000 in dev).
+- NEXT_PUBLIC_BASE_URL: Public site URL exposed to the browser when needed.
+- NODEMAILER_EMAIL: SMTP username (for Gmail, the full email address).
+- NODEMAILER_PASSWORD: SMTP/App Password (for Gmail, create an App Password; do not use your normal password).
+- GEMINI_API_KEY: Google AI Studio key for Gemini (used by Inngest AI inference).
+- NODE_ENV: development or production (optional; set by platform in production).
+
+Example (do not use these sample values in production):
 
 ```
-[db-test] MongoDB connection failed: Authentication failed.
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/mydb
+BETTER_AUTH_SECRET=replace-with-strong-secret
+BETTER_AUTH_URL=http://localhost:3000
+GEMINI_API_KEY=your-gemini-api-key
+NODEMAILER_EMAIL=your@gmail.com
+NODEMAILER_PASSWORD=your-app-password
 ```
 
-3) Test via HTTP health endpoint (while dev server is running)
+### Authentication
 
-- Start the dev server:
+- Implemented with BetterAuth and the MongoDB adapter.
+- Initialization: `lib/better-auth/auth.ts` connects to MongoDB (via `connectToDatabase()`), then configures BetterAuth with:
+  - `emailAndPassword` enabled
+  - Cookie storage via `nextCookies()` plugin
+- Usage in server actions: `lib/actions/auth.actions.ts` shows `signUpWithEmail`, which calls `auth.api.signUpEmail` then emits an Inngest event on success.
 
-```
-npm run dev
-```
+### Email (Nodemailer)
 
-- Open this URL in the browser or curl it:
+- Transport in `lib/nodemailer/index.ts` using Gmail service by default; customize if you use a different SMTP provider.
+- Template in `lib/nodemailer/templates.ts` (responsive, dark‑mode friendly HTML).
+- Helper `sendWelcomeEmail` builds the email HTML, subject, and sends via the configured transporter.
+- Gmail note: enable 2FA and create an App Password; assign it to `NODEMAILER_PASSWORD`.
 
-```
-http://localhost:3000/api/health/db
-```
+### Inngest Jobs and AI Integration
 
-- Expected JSON on success:
+- Inngest client configured at `lib/inngest/client.ts` with project id and Gemini API key.
+- HTTP route at `app/api/inngest/route.ts` exposes GET/POST/PUT for Inngest’s Next.js adapter.
+- Function `sendSignUpEmail` (id: `sign-up-email`) listens to `app/user.created` events and:
+  1) Builds a user profile string from event data (country, goals, risk, industry)
+  2) Calls `step.ai.infer` with the Gemini model to generate a personalized intro paragraph
+  3) Sends the welcome email via `sendWelcomeEmail`
+- Prompts live in `lib/inngest/prompts.ts` with strict formatting guidance for AI output.
 
-```
-{"ok":true,"state":1,"elapsedMs":<number>}
-```
+#### Triggering locally
 
-Notes
+- Trigger automatically by registering users via the sign‑up flow (see `lib/actions/auth.actions.ts`).
+- Or manually emit an event from server‑side code using `inngest.send({ name: "app/user.created", data })`.
 
-- The Mongoose connection helper is at `database/mongoose.ts` and caches the connection per runtime for performance.
-- The health route is at `app/api/health/db/route.ts` and simply ensures a connection can be established.
+### API Routes
+
+- GET /api/health/db — verifies MongoDB connectivity.
+  - Response on success: `{ ok: true, state: 1, elapsedMs: <number> }`
+  - Response on failure: `{ ok: false, error: <message>, elapsedMs: <number> }`
+- GET|POST|PUT /api/inngest — Inngest adapter endpoint for function dispatching.
+
+### Database
+
+- Connection helper at `database/mongoose.ts` caches the Mongoose connection per runtime to avoid duplicate connections.
+- Health route at `app/api/health/db/route.ts` uses the helper to test connectivity.
+- CLI script `scripts/db-test.mjs` pings MongoDB using the official driver:
+  - Run: `npm run db:test`
+  - Output example: `[db-test] MongoDB ping ok in 45ms: { ok: 1 }`
+
+### Deployment
+
+- Build: `npm run build`; Start: `npm start`.
+- Provide all environment variables in your hosting platform (e.g., Vercel, Render, Fly.io), ensuring server‑only secrets are not exposed as `NEXT_PUBLIC_*`.
+- Inngest: the Next.js adapter route `/api/inngest` must be accessible publicly for Inngest to invoke functions.
+- Email: if not using Gmail, update the transporter configuration accordingly.
+
+### Troubleshooting
+
+- MongoDB connection fails:
+  - Check `MONGODB_URI`, IP allowlist (Atlas), and network connectivity.
+  - Use `npm run db:test` to isolate credential vs. network issues.
+- Gmail rejects login:
+  - Ensure 2FA is enabled and you’re using an App Password; service may block non‑secure access.
+- Gemini errors (permission/invalid API key):
+  - Verify `GEMINI_API_KEY` and model availability in your region; reduce to a basic model if needed.
+- Inngest 404/401:
+  - Confirm the `/api/inngest` route is deployed and the client id/route wiring matches your environment.
+
+## Scripts
+
+- dev — start Next.js in dev mode (Turbopack)
+- build — production build (Turbopack)
+- start — run production server
+- db:test — ping MongoDB via official driver
+
+## Tech Stack
+
+- next, react, typescript
+- mongoose, mongodb
+- better-auth
+- inngest
+- nodemailer
+
+## License
+
+This repository is provided as-is without warranty. Ensure you remove sample secrets and configure your own environment before deploying.
