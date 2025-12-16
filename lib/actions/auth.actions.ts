@@ -14,45 +14,39 @@ export const signUpWithEmail = async ({
   preferredIndustry,
 }: SignUpFormData) => {
   try {
-    const result = await auth.api.signUpEmail({
+    const response = await auth.api.signUpEmail({
       body: { email, password, name: fullName },
     });
 
-    // If BetterAuth didn't throw, we consider it a success
-    await inngest.send({
-      name: "app/user.created",
-      data: {
-        email,
-        name: fullName,
-        country,
-        investmentGoals,
-        riskTolerance,
-        preferredIndustry,
-      },
-    });
+    if (response) {
+      await inngest.send({
+        name: "app/user.created",
+        data: {
+          email,
+          name: fullName,
+          country,
+          investmentGoals,
+          riskTolerance,
+          preferredIndustry,
+        },
+      });
+    }
 
-    return { success: true, data: result };
+    return { success: true, data: response };
   } catch (e) {
     console.log("Sign up failed", e);
-    return {
-      success: false,
-      error: e instanceof Error ? e.message : "Sign up failed",
-    };
+    return { success: false, error: "Sign up failed" };
   }
 };
+
 export const signInWithEmail = async ({ email, password }: SignInFormData) => {
   try {
-    const result = await auth.api.signInEmail({
-      body: { email, password },
-    });
+    const response = await auth.api.signInEmail({ body: { email, password } });
 
-    return { success: true, data: result };
+    return { success: true, data: response };
   } catch (e) {
     console.log("Sign in failed", e);
-    return {
-      success: false,
-      error: e instanceof Error ? e.message : "Sign in failed",
-    };
+    return { success: false, error: "Sign in failed" };
   }
 };
 

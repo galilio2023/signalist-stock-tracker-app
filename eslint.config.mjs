@@ -10,17 +10,8 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  // Keep only configs that are installed to avoid build failures
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    rules: {
-      // Prevent build from failing on common TypeScript patterns used in this repo
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-      ],
-    },
     ignores: [
       "node_modules/**",
       ".next/**",
