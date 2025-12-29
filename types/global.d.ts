@@ -71,6 +71,11 @@ declare global {
     id: string;
     name: string;
     email: string;
+    image?: string;
+
+    id: string;
+    name: string;
+    email: string;
   };
 
   type Stock = {
@@ -223,3 +228,4 @@ declare global {
 }
 
 export {};
+

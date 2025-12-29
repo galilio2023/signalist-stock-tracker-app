@@ -21,7 +21,7 @@ export default async function RootLayout({
         id: session.user.id,
         name: session.user.name || "",
         email: session.user.email || "",
-        // Add other fields as needed
+        image: session.user.image || undefined,
       };
     }
   } catch (error) {
