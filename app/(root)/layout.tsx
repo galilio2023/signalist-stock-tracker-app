@@ -2,23 +2,28 @@ import React from "react";
 import Header from "@/components/Header";
 import { auth } from "@/lib/better-auth/auth";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
-const Layout = async ({ children }: { children: React.ReactNode }) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  if (!session?.user) return redirect("/sign-in");
-  const user = {
-    id: session.user.id,
-    name: session.user.name,
-    email: session.user.email,
-  };
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  let user = null;
+  
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    user = session?.user || null;
+  } catch (error) {
+    console.log("Error getting session:", error);
+    user = null;
+  }
+
   return (
-    <main className="min-h-screen text-gray-400">
+    <>
       <Header user={user} />
-      <div className="container py-10">{children}</div>
-    </main>
+      <main className="min-h-[calc(100vh-120px)]">{children}</main>
+    </>
   );
-};
-export default Layout;
+}

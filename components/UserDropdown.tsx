@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,71 +9,59 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
-import NavItems from "@/components/NavItems";
 import { signOut } from "@/lib/actions/auth.actions";
 
-const UserDropdown = ({ user }: { user: User }) => {
-  const router = useRouter();
+const UserDropdown = ({ user }: { user?: User }) => {
+  // Handle case where user might be undefined
+  if (!user) {
+    return (
+      <Button
+        variant="outline"
+        onClick={() => (window.location.href = "/sign-in")}
+      >
+        Sign In
+      </Button>
+    );
+  }
+
   const handleSignOut = async () => {
     await signOut();
-    router.push("/sign-in");
+    window.location.href = "/";
   };
+
+  const fallbackText = user.name && user.name.length > 0 
+    ? user.name[0].toUpperCase() 
+    : "U";
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex items-center gap-3 text-gray-4 hover:text-yellow-500"
-        >
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="https://media.licdn.com/dms/image/v2/D4D03AQE81GNXPyIkjA/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1680582148684?e=1767225600&v=beta&t=2tK39yYPkYTOabc2M78npy1b3iUwGCF2tqEG8s9YTIY" />
-
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={user.image || ""} alt={user.name || "User"} />
             <AvatarFallback className="bg-yellow-500 text-yellow-900 text-sm font-bold">
-              {user.name[0]}
+              {fallbackText}
             </AvatarFallback>
           </Avatar>
-          <div className="hidden md:flex flex-col items-start">
-            <span className="text-base font-medium text-gray-400">
-              {user.name}
-            </span>
-          </div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="text-gray-400">
-        <DropdownMenuLabel>
-          <div className="flex relative items-center gap-3 py-2">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src="https://media.licdn.com/dms/image/v2/D4D03AQE81GNXPyIkjA/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1680582148684?e=1767225600&v=beta&t=2tK39yYPkYTOabc2M78npy1b3iUwGCF2tqEG8s9YTIY" />
-              <AvatarFallback className="bg-yellow-500 text-yellow-900 text-sm font-bold">
-                {user.name[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-base font-medium text-gray-400">
-                {user.name}
-              </span>
-              <span className="text-sm text-gray-500">{user.email}</span>
-            </div>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email || ""}
+            </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-gray-600" />
-        <DropdownMenuItem
-          onClick={handleSignOut}
-          className="text-gray-100 text-md font-medium focus:bg-transparent focus:text-yellow-500 transition-colors cursor-pointer"
-        >
-          <LogOut className="h-4 w-4 mr-2 hidden sm:block" />
-          Logout
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut}>
+          Sign out
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="hidden sm:block bg-gray-600" />
-        <nav className="sm:hidden">
-          <NavItems />
-        </nav>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
+
 export default UserDropdown;
