@@ -8,16 +8,25 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let user = null;
+  let user: User | undefined = undefined;
   
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
     });
-    user = session?.user || null;
+    
+    // Convert Better Auth user to our User type
+    if (session?.user) {
+      user = {
+        id: session.user.id,
+        name: session.user.name || "",
+        email: session.user.email || "",
+        // Add other fields as needed
+      };
+    }
   } catch (error) {
     console.log("Error getting session:", error);
-    user = null;
+    user = undefined;
   }
 
   return (
