@@ -23,17 +23,24 @@ export const signUpWithEmail = async ({
     console.log("Signup response:", response);
 
     if (response) {
-      await inngest.send({
-        name: "app/user.created",
-        data: {
-          email,
-          name: fullName,
-          country,
-          investmentGoals,
-          riskTolerance,
-          preferredIndustry,
-        },
-      });
+      // Try to send to Inngest but don't fail if it doesn't work
+      try {
+        await inngest.send({
+          name: "app/user.created",
+          data: {
+            email,
+            name: fullName,
+            country,
+            investmentGoals,
+            riskTolerance,
+            preferredIndustry,
+          },
+        });
+        console.log("Inngest event sent successfully");
+      } catch (inngestError) {
+        console.log("Inngest failed (non-critical):", inngestError.message);
+        // Don't fail signup just because Inngest failed
+      }
     }
 
     return { success: true, data: response };
