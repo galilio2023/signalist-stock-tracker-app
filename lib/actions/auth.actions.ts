@@ -37,8 +37,8 @@ export const signUpWithEmail = async ({
           },
         });
         console.log("Inngest event sent successfully");
-      } catch (inngestError) {
-        console.log("Inngest failed (non-critical):", inngestError.message);
+      } catch (inngestError: any) {
+        console.log("Inngest failed (non-critical):", inngestError?.message || "Unknown error");
         // Don't fail signup just because Inngest failed
       }
     }
@@ -46,7 +46,6 @@ export const signUpWithEmail = async ({
     return { success: true, data: response };
   } catch (e: any) {
     console.log("Sign up failed with error:", e);
-    console.log("Full error object:", JSON.stringify(e, null, 2));
     
     // User-friendly error messages
     let errorMessage = "Sign up failed. Please try again.";
